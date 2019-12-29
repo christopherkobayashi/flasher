@@ -515,7 +515,7 @@ firm_dumper (int device, char **inbuff, int loc, size_t pos, size_t dsize)
       if (!lgren_read (device, loc, &d, start_pos, size))
 	{
 	  printf
-	    ("firm_dumper: Failed to read from drive. Will write what we got so far\n");
+	    ("firm_dumper: Failed to read from drive @ %zX, %zX. Will write what we got so far\n", start_pos, size);
 	  break;
 	}
 
@@ -801,7 +801,8 @@ find_pattern_drive (int device, int loc, char *pattern, size_t psize)
        bcount += SECTOR_SIZE - psize)
     {
       if (!lgren_read (device, loc, &d, bcount, d.datasize))
-	{
+    {
+	  printf("lgren_read failed @ %zX\n", bcount);
 	  free (d.data);
 	  return 0;
 	}
