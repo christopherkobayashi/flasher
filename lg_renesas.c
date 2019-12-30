@@ -106,7 +106,7 @@ lgren_read (int device, char source, mmcdata_s * d, size_t pos, size_t size)
   *((short *) (&d->cmd[7])) = swap16 (size);	/* LSB to MSB fill [7] through [8] */
   d->cmd[9] = 0x44;
   retval = drive_command (device, d, MMC_READ, &err);
-  if (retval) {
+  if (!retval) {
 	  printf("drive_command error %X: %s\n", err, strerror(err));
   }
   return retval;
@@ -126,7 +126,7 @@ lgren_write (int device, char source, mmcdata_s * d, size_t pos, size_t size)
   *((short *) (&d->cmd[7])) = swap16 (size);	/* LSB to MSB fill [7] through [8] */
   d->cmd[9] = 0x44;
   retval = drive_command (device, d, MMC_WRITE, &err);
-  if (retval) {
+  if (!retval) {
 	  printf("lgren_write error %X: %s\n", err, strerror(err));
   }
   return retval;

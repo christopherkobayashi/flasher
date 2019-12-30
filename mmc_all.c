@@ -120,7 +120,7 @@ drive_eject (int device)
   data_l.cmd[0] = 0x1B;
   data_l.cmd[4] = 0x02;
   retval = drive_command (device, &data_l, MMC_READ, &err);
-  if (retval) {
+  if (!retval) {
 	  printf("drive_eject error %X: %s\n", err, strerror(err));
   }
   return retval;
