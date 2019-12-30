@@ -434,11 +434,12 @@ firm_flasher (int device, char *buff, size_t fsize)
 		  (unsigned int) pos);
 	  return 0;
 	}
+      printf("\r%3.2f %%",(pos/(float)fsize)*100);
       pos += size;
       ud_progress ((pos / (double) fsize));
-      /* printf("\b\b\b\b\b\b\b\b\b\b\b%.2f",(pos/(float)fsize)*100.0); */
       fflush (stdout);
     }
+	printf("\n");
 
   if (!lgren_diag (device))
     {
@@ -536,10 +537,12 @@ firm_dumper (int device, char **inbuff, int loc, size_t pos, size_t dsize)
       dumpped_size += size;
       free (d.data);		/* clean up read_firmware memory */
       d.data = 0;
+      printf("\r%3.2f %%", (dumpped_size/(float)dsize)*100);
       /* printf("\b\b\b\b\b\b\b\b\b\b\b\b%.2f",(dumpped_size/(double)dump_size)); */
       /* ud_progress((dumpped_size/(double)dump_size)); */
       fflush (stdout);		/* print to screen now */
     }
+	printf("\n");
   *inbuff = buff;
   return dumpped_size;
 }
