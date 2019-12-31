@@ -146,7 +146,7 @@ int drive_stop (int device);
 int drive_eject (int device);
 int drive_safe_eject (int device);
 char drive_type (int device);
-int drive_command (int drive, mmcdata_s * d, int direction);
+int drive_command (int drive, mmcdata_s * d, int direction, int *errval);
 int drive_open (char *device);
 char drive_close (FILE * intdevice);
 drives_s *drives_available (void);

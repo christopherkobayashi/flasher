@@ -16,6 +16,7 @@
 
 #if defined(__linux__)
 #include "libmmc.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,9 +24,9 @@
 #include <sys/ioctl.h>
 
 
-/* execute the cdb mmc command for linux */
+/* execute the cdb mmc command for linux. ret 0 if error */
 int
-drive_command (int drive, mmcdata_s * d, int direction)
+drive_command (int drive, mmcdata_s * d, int direction, int *errval)
 {
   int ret = 1;
   struct cdrom_generic_command cgc;
@@ -38,8 +39,12 @@ drive_command (int drive, mmcdata_s * d, int direction)
   cgc.timeout = 18000;
   cgc.sense = (struct request_sense *) d->sensedata;
 
-  if (ioctl (drive, CDROM_SEND_PACKET, &cgc) < 0)
-      ret = 0;
+  if (ioctl (drive, CDROM_SEND_PACKET, &cgc) < 0) {
+      if (errval) {
+	    *errval = errno;
+	  }
+	  ret = 0;
+  }
 
   d->senseret.sk = (d->sensedata[2] & 0x0F);
   d->senseret.asc = d->sensedata[12];

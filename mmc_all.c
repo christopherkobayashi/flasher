@@ -44,7 +44,7 @@ drive_inquiry (int device)
     {
       data_l.cmd[0] = 0x12;
       data_l.cmd[4] = (char) data_l.datasize;
-      if (!drive_command (device, &data_l, MMC_READ))
+      if (!drive_command (device, &data_l, MMC_READ, NULL))
 	{
 	  printf ("drive_inquiry: failed to inquiry drive info\n");
 	  ret = 0;
@@ -92,7 +92,7 @@ drive_ready (int device)
   mmcdata_s data_l;
   memset (&data_l, 0, sizeof (mmcdata_s));
   data_l.cmdsize = 6;		/* CDB6 */
-  return (drive_command (device, &data_l, MMC_READ));
+  return (drive_command (device, &data_l, MMC_READ, NULL));
 }
 
 /* Stop Spinig of the drive */
@@ -105,20 +105,25 @@ drive_stop (int device)
   data_l.cmdsize = 6;		/* CDB6 */
 
   data_l.cmd[0] = 0x1B;
-  return (drive_command (device, &data_l, MMC_READ));
+  return (drive_command (device, &data_l, MMC_READ, NULL));
 }
 
 /* CDB 1Bh,0,0,0,2,0 */
 int
 drive_eject (int device)
 {
+  int err = 0, retval;
   mmcdata_s data_l;
   memset (&data_l, 0, sizeof (mmcdata_s));
   data_l.cmdsize = 6;		/* CDB6 */
 
   data_l.cmd[0] = 0x1B;
   data_l.cmd[4] = 0x02;
-  return (drive_command (device, &data_l, MMC_READ));
+  retval = drive_command (device, &data_l, MMC_READ, &err);
+  if (!retval) {
+	  printf("drive_eject error %X: %s\n", err, strerror(err));
+  }
+  return retval;
 }
 
 /* Safe Eject */

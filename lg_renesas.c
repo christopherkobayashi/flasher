@@ -77,7 +77,7 @@ lgren_diag (int device)
   d.cmd[0] = 0x1D;
   d.cmd[1] = 0x01;
   d.cmd[4] = 0x06;
-  return (drive_command (device, &d, MMC_WRITE));
+  return (drive_command (device, &d, MMC_WRITE, NULL));
 }
 
 /* read any memory location from the drive */
@@ -85,6 +85,7 @@ int
 lgren_read (int device, char source, mmcdata_s * d, size_t pos, size_t size)
 {
   char *buffer = 0;
+  int err = 0, retval;
   if (!(d->data) && size)
     {
       buffer = (char *) malloc (size);
@@ -104,7 +105,11 @@ lgren_read (int device, char source, mmcdata_s * d, size_t pos, size_t size)
   d->cmd[6] = 0x00;
   *((short *) (&d->cmd[7])) = swap16 (size);	/* LSB to MSB fill [7] through [8] */
   d->cmd[9] = 0x44;
-  return (drive_command (device, d, MMC_READ));
+  retval = drive_command (device, d, MMC_READ, &err);
+  if (!retval) {
+	  printf("drive_command error %X: %s\n", err, strerror(err));
+  }
+  return retval;
 }
 
 /* used to write to memory location on the drive */
@@ -112,6 +117,7 @@ lgren_read (int device, char source, mmcdata_s * d, size_t pos, size_t size)
 int
 lgren_write (int device, char source, mmcdata_s * d, size_t pos, size_t size)
 {
+  int err = 0, retval;
   d->cmdsize = 10;		/* CDB10 */
   d->cmd[0] = CMD_WRITE;
   d->cmd[1] = source;
@@ -119,7 +125,11 @@ lgren_write (int device, char source, mmcdata_s * d, size_t pos, size_t size)
   d->cmd[6] = 0x00;
   *((short *) (&d->cmd[7])) = swap16 (size);	/* LSB to MSB fill [7] through [8] */
   d->cmd[9] = 0x44;
-  return (drive_command (device, d, MMC_WRITE));
+  retval = drive_command (device, d, MMC_WRITE, &err);
+  if (!retval) {
+	  printf("lgren_write error %X: %s\n", err, strerror(err));
+  }
+  return retval;
 }
 
 char
@@ -424,11 +434,12 @@ firm_flasher (int device, char *buff, size_t fsize)
 		  (unsigned int) pos);
 	  return 0;
 	}
+      printf("\r%3.2f %%",(pos/(float)fsize)*100);
       pos += size;
       ud_progress ((pos / (double) fsize));
-      /* printf("\b\b\b\b\b\b\b\b\b\b\b%.2f",(pos/(float)fsize)*100.0); */
       fflush (stdout);
     }
+	printf("\n");
 
   if (!lgren_diag (device))
     {
@@ -515,7 +526,7 @@ firm_dumper (int device, char **inbuff, int loc, size_t pos, size_t dsize)
       if (!lgren_read (device, loc, &d, start_pos, size))
 	{
 	  printf
-	    ("firm_dumper: Failed to read from drive. Will write what we got so far\n");
+	    ("firm_dumper: Failed to read from drive @ %zX, %zX. Will write what we got so far\n", start_pos, size);
 	  break;
 	}
 
@@ -526,10 +537,12 @@ firm_dumper (int device, char **inbuff, int loc, size_t pos, size_t dsize)
       dumpped_size += size;
       free (d.data);		/* clean up read_firmware memory */
       d.data = 0;
+      printf("\r%3.2f %%", (dumpped_size/(float)dsize)*100);
       /* printf("\b\b\b\b\b\b\b\b\b\b\b\b%.2f",(dumpped_size/(double)dump_size)); */
       /* ud_progress((dumpped_size/(double)dump_size)); */
       fflush (stdout);		/* print to screen now */
     }
+	printf("\n");
   *inbuff = buff;
   return dumpped_size;
 }
@@ -801,7 +814,8 @@ find_pattern_drive (int device, int loc, char *pattern, size_t psize)
        bcount += SECTOR_SIZE - psize)
     {
       if (!lgren_read (device, loc, &d, bcount, d.datasize))
-	{
+    {
+	  printf("lgren_read failed @ %zX\n", bcount);
 	  free (d.data);
 	  return 0;
 	}
